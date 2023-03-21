@@ -1,20 +1,14 @@
-# Use a Node.js base image
-FROM node:16-alpine
+FROM node:14
 
-# Set the working directory in the container
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copy the package.json and package-lock.json files to the container
-COPY package*.json ./
+COPY package.json ./
+COPY package-lock.json ./
 
-# Install the dependencies
-RUN npm install --only=production
+RUN npm i
 
-# Copy the source code to the container
 COPY . .
 
-# Expose the port that the application will listen on
-EXPOSE 3000
+RUN npm run build
 
-# Start the application
-CMD ["npm", "start"]
+CMD npm start
