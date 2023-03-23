@@ -26,6 +26,11 @@ export class Database {
   }
 
   public async insertTweets(values: any[][]): Promise<void> {
-    await this.client.query('INSERT INTO tweets (id, text, author_id) VALUES ($1, $2, $3)', values);
+    for (let index = 0; index < values.length; index++) {
+      await this.client.query(
+        'INSERT INTO tweet (author_id, tweet_id, text) VALUES ($1, $2, $3)',
+        values[index]
+      );
+    }
   }
 }
