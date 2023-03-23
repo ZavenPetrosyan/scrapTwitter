@@ -12,29 +12,38 @@ export class TwitterScraper {
     }
 
     async scrapeTopic(topic: string): Promise<void> {
-        try {
-            const query = {
-                query: topic,
-                max_results: 100,
-                tweet_fields: ['text', 'author_id']
-            };
-            const bearerToken = await this.getBearerToken();
+        const bearerToken = await this.getBearerToken();
+        if (!bearerToken) {
+            console.error(`Error getting bearer token for "${topic}"`);
+            return;
+        }
 
-            const { data: { data: tweets } } = await this.axiosInstance.get('/tweets/search/recent', {
+        const query: any = {
+            query: topic,
+            'tweet.fields': 'text,author_id',
+            expansions: 'author_id',
+            'user.fields': 'username'
+        };
+
+        let response;
+        try {
+            response = await this.axiosInstance.get('/2/tweets/search/recent', {
                 params: query,
                 headers: {
                     Authorization: `Bearer ${bearerToken}`
                 }
             });
-
-            const values = tweets.map((tweet: any) => [tweet.id, tweet.text, tweet.author_id]);
-
-            await this.db.insertTweets(values);
-            console.log(`Scraped ${tweets.length} tweets for "${topic}".`);
         } catch (err) {
             console.error(`Error scraping tweets for "${topic}": ${err}`);
+            return;
         }
+
+        const tweets = response.data.data;
+        const values = tweets.map((tweet: any) => [tweet.author_id,  tweet.id, tweet.text]);
+        await this.db.insertTweets(values);
     }
+
+
 
     async getBearerToken() {
         const encodedCredentials = Buffer.from(`${process.env.TWITTER_API_KEY}:${process.env.TWITTER_API_KEY_SECRET}`).toString('base64');
